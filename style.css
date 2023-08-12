@@ -1,0 +1,153 @@
+.neo-prompt-selector-container {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.neo-prompt-selector-button {
+  flex: 1;
+}
+
+.neo-prompt-info-button:hover {
+  cursor: help;
+}
+
+/*
+  Action Row
+ */
+
+.neo-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/*
+  ==========================
+  Tab - Nav
+ */
+
+
+/*
+  ==========================
+  Tab - Tag Container
+ */
+.neo-tag-container {
+  display: flex;
+  flex: 1 calc(50% - 20px);
+  flex-wrap: wrap;
+  min-width: min(320px, 100%);
+  max-width: 100%;
+  border-width: 1px;
+  border-color: var(--block-border-color, #374151);
+  border-radius: var(--block-radius, 8px);
+  padding: 8px;
+  height: fit-content;
+}
+
+.neo-tag-group-container {
+  flex-direction: column;
+}
+
+.neo-tag-group-button {
+  margin-bottom: 8px !important;
+}
+
+.neo-tag-button {
+  margin: 2px !important;
+  height: min-content;
+  padding: var(--size-1) var(--size-4) !important;
+}
+
+.neo-tag-group-button.active, .neo-tag-group-button.negative-active,
+.neo-tag-group-button.active:hover, .neo-tag-group-button.negative-active:hover,
+.neo-tag-button.active, .neo-tag-button.negative-active,
+.neo-tag-button.active:hover, .neo-tag-button.negative-active:hover {
+  background: none;
+  background-color: antiquewhite;
+  color:black;
+}
+
+/*
+  ==========================
+  Others
+ */
+
+.neo-button {
+  position: relative;
+}
+
+/* Button state indicator - Added to Prompt */
+.neo-button.active::before {
+  position: absolute;
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: green;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Button state indicator - Added to Negative Prompt */
+.neo-button.negative-active::after {
+  position: absolute;
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: red;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.neo-button .neo-button-tooltip {
+  visibility: hidden;
+  width: 250px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* position */
+  position: absolute;
+  z-index: 1;
+
+  top: 150%;
+  left: 50%;
+  margin-left: -125px;
+}
+
+.neo-button .neo-button-tooltip::after {
+  content: " ";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+.neo-button:hover .neo-button-tooltip {
+  visibility: visible;
+}
+
+.neo-divider {
+  color: var(--block-border-color, #374151) !important;
+  margin: 8px 0px !important;
+}
+
+.neo-hide {
+  display: none;
+}
+
+.neo-show {
+  display: block;j
+}
