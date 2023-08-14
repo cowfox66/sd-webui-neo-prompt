@@ -1,3 +1,5 @@
+/* #region Layout - Open Button Container */
+
 .neo-prompt-selector-container {
   display: flex;
   flex-direction: row;
@@ -9,13 +11,9 @@
   flex: 1;
 }
 
-.neo-prompt-info-button:hover {
-  cursor: help;
-}
+/* #endregion */
 
-/*
-  Action Row
- */
+/* #region Layout - Action Row */
 
 .neo-action-row {
   display: flex;
@@ -23,16 +21,15 @@
   gap: 12px;
 }
 
-/*
-  ==========================
-  Tab - Nav
- */
+.neo-prompt-info-button:hover {
+  cursor: help;
+}
+
+/* #endregion */
 
 
-/*
-  ==========================
-  Tab - Tag Container
- */
+/* #region Layout - Tag Container */
+
 .neo-tag-container {
   display: flex;
   flex: 1 calc(50% - 20px);
@@ -69,10 +66,10 @@
   color:black;
 }
 
-/*
-  ==========================
-  Others
- */
+/* #endregion */
+
+
+/* #region UI Element - Button */
 
 .neo-button {
   position: relative;
@@ -119,7 +116,7 @@
   position: absolute;
   z-index: 1;
 
-  top: 150%;
+  top: 130%;
   left: 50%;
   margin-left: -125px;
 }
@@ -139,6 +136,11 @@
   visibility: visible;
 }
 
+/* #endregion */
+
+
+/* #region UI Element - Others */
+
 .neo-divider {
   color: var(--block-border-color, #374151) !important;
   margin: 8px 0px !important;
@@ -151,3 +153,5 @@
 .neo-show {
   display: block;j
 }
+
+/* #endregion */

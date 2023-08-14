@@ -198,13 +198,20 @@ class NeoUiElementBuilder {
   static createTagButtonDom(tagValue, tagKey, tagKeyPathPrefix, menuPageType, classList, clickCallback, color = 'primary') {
     //
     const tagButton = NeoPromptUiElementBuilder.gradioBaseButtonDom(tagKey, { color })
-    tagButton.innerHTML = tagKey
+    // tagButton.innerHTML = tagKey
     if (Array.isArray(classList)) {
       tagButton.classList.add(...classList)
     }
 
     // Decide the "tag value"
-    tagButton.dataset.tagValue = tagKeyPathPrefix ? `@${tagKeyPathPrefix}@` : tagValue
+    // If `tagKeyPathPrefix` is not empty, it is for a "tag group button"
+    if (tagKeyPathPrefix) {
+      // For a "tag group button", use a "custom random function" as the value.
+      tagButton.dataset.tagValue = `@${tagKeyPathPrefix}@`
+    } else {
+      // For a normal "tag button", just show the value.
+      tagButton.dataset.tagValue = tagValue
+    }
 
     // Add "click event" if available
     if (clickCallback) {
@@ -293,12 +300,25 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
     // Get the tag data
     this.tags = await this._parseTagFiles()
 
-    // Prepare the HTML DOMs
-    const mainContainerArea = gradioApp().querySelector(`#${this.NEO_PROMPT_AREA_CONTAINER_ID}`)
-    if (mainContainerArea != null) {
-      this.visible = false
-      mainContainerArea.remove()
-    }
+    // Init the DOMs on each "menu pages"
+    Array.from([sdWebUiMenuPageTypes.txt2img, sdWebUiMenuPageTypes.img2img]).forEach((menuPageType) => {
+      // Remove the existing DOMs if needed
+      // Open Button Container
+      const openButtonContainer = gradioApp()
+      .getElementById(NeoPromptUiElementBuilder.buildDomElementId(menuPageType,
+        this.NEO_PROMPT_SELECTOR_CONTAINER_ID))
+      if (openButtonContainer != null) {
+        openButtonContainer.remove()
+      }
+
+      // Main Container
+      const mainContainerArea = gradioApp()
+      .getElementById(NeoPromptUiElementBuilder.buildDomElementId(menuPageType,
+        this.NEO_PROMPT_AREA_CONTAINER_ID))
+      if (mainContainerArea != null) {
+        mainContainerArea.remove()
+      }
+    })
 
     // Add it below the "prompt" row for both `txt2img` and `img2img` pages.
     this._renderUi(sdWebUiMenuPageTypes.txt2img)
@@ -334,10 +354,30 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
     for (const path of pathList) {
       // Get the "filename" as the `key`
       const filename = path.split('/').pop().split('.').slice(0, -1).join('.')
+
+      // Guard
+      if (filename.length === 0) {
+        continue
+      }
+
       const tagFileContent = await this._readFile(path)
-      this.yaml.loadAll(tagFileContent, function (tagData) {
-        tags[filename] = tagData
-      })
+      // Try to load YAML content
+      try {
+        const tagData = this.yaml.load(tagFileContent.trim());
+        if (tagData) {
+          tags[filename] = tagData
+        } else {
+          // Assign an "empty" tag group so that it can be ignored later
+          tags[filename] = {}
+        }
+      } catch (e) {
+        console.log(e);
+        // Assign an "empty" tag group so that it can be ignored later
+        tags[filename] = {}
+      }
+      // this.yaml.loadAll(tagFileContent, function (tagData) {
+      //   tags[filename] = tagData
+      // })
     }
 
     return tags
@@ -359,7 +399,8 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
    */
   _renderUi(menuPageType) {
     // Create the "main container"
-    const mainContainerDom = NeoPromptUiElementBuilder.gradioBaseAreaContainerDom(this.NEO_PROMPT_AREA_CONTAINER_ID)
+    const mainContainerDom = NeoPromptUiElementBuilder.gradioBaseAreaContainerDom(NeoPromptUiElementBuilder.buildDomElementId(menuPageType,
+      this.NEO_PROMPT_AREA_CONTAINER_ID))
     mainContainerDom.appendChild(this._renderActionRow(menuPageType))
     mainContainerDom.appendChild(NeoPromptUiElementBuilder.createDom('hr', ['neo-divider']))
     mainContainerDom.appendChild(this._renderTagTabContainer(menuPageType))
@@ -381,7 +422,7 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
 
     // Add it to "Actions Column"
     const container = NeoPromptUiElementBuilder.createDom('div', ['neo-prompt-selector-container'])
-    container.id = openButton.id = NeoPromptUiElementBuilder.buildDomElementId(menuPageType,
+    container.id = NeoPromptUiElementBuilder.buildDomElementId(menuPageType,
       this.NEO_PROMPT_SELECTOR_CONTAINER_ID)
     container.appendChild(openButton)
     gradioApp()
@@ -458,6 +499,13 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
     // Loop into "tag data" and build button for each tag
     let tagTabIndex = 0
     Object.keys(this.tags).forEach((key) => {
+      //
+      // Ignore the "empty" tag nav button
+      const tagValue = this.tags[key]
+      if (typeof tagValue === 'object' && Object.keys(tagValue).length === 0) {
+        return
+      }
+
       // Create "tag nav button"
       let tabNavButton = NeoPromptUiElementBuilder.createDom('button', [sdWebUiDefaultCssClass, 'neo-button'],tagTabNavDom,  key)
       // Add data - "index"
@@ -469,7 +517,6 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
       tagTabNavDom.appendChild(tabNavButton)
 
       // Create "tag content container" and add "tags"
-      const tagValue = this.tags[key]
       let tabContentContainer = NeoPromptUiElementBuilder.createDom('div', ['neo-tag-container', 'neo-hide'])
       this._renderTagButton(tagValue, key, '', tabContentContainer, menuPageType)
       tagTabContentContainerDom.appendChild(tabContentContainer)
@@ -531,7 +578,9 @@ class NeoPromptUiElementBuilder extends NeoUiElementBuilder {
           const tagGroupButton = NeoPromptUiElementBuilder.createTagButtonDom(nextLevelTagValue, key, updatedTagKeyPathPrefix, menuPageType, [sdWebUiDefaultCssClass, 'neo-tag-group-button', 'neo-button'],
           this._toggleTagSelectionForPrompt.bind(this), 'primary'
           )
-          const tagGroupButtonTooltip = NeoPromptUiElementBuilder.createDom('span', ['neo-button-tooltip'], tagGroupButton, `@${updatedTagKeyPathPrefix}@`)
+          // Add a "tooltip" for the button
+          const tagGroupButtonTooltip = `@${updatedTagKeyPathPrefix}@<br><br>(随机选择组内提示词 | Randomly pick one prompt within group)`
+          NeoPromptUiElementBuilder.createDom('span', ['neo-button-tooltip'], tagGroupButton, tagGroupButtonTooltip)
           // Container to include "tab buttons"
           const tagGroupTagContainer = NeoPromptUiElementBuilder.createDom('div', ['neo-tag-container'])
           // Add it to "parent dom"

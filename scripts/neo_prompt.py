@@ -31,13 +31,15 @@ prompt_type_definitions = [
     ['all_prompts', 'prompt', 'Original Prompt'],
     ['all_negative_prompts', 'negative_prompt', 'Original Negative Prompt'],
     ['all_hr_prompts', 'hr_prompt', 'Original Prompt (Hires)'],
-    ['all_hr_negative_prompts', 'hr_negative_prompt', 'Original Negative Prompt (Hires)'],
+    ['all_hr_negative_prompts', 'hr_negative_prompt',
+        'Original Negative Prompt (Hires)'],
 ]
 
 # endregion
 
 # ----------------------------------
 # region Extension Definition
+
 
 class PromptSelectorExtensionScript(scripts.Script):
 
@@ -71,9 +73,8 @@ class PromptSelectorExtensionScript(scripts.Script):
         # Decide the "UI Element ID" for "txt2img" or "img2img"
         reload_button_element_id = 'img2img_neo-prompt-reload-button' if is_img2img else 'txt2img_neo-prompt-reload-button'
 
-        # Define a "Reload" button
+        # Define a "Reload" button so that it can help trigger a "python" level of action.
         reload_button = self._define_reload_button(reload_button_element_id)
-
 
         return [reload_button]
 
@@ -104,9 +105,12 @@ class PromptSelectorExtensionScript(scripts.Script):
 
     def _define_reload_button(self, element_id):
         #
-        reload_button = gradio.Button('🔄', variant='secondary', elem_id=element_id)
+        reload_button = gradio.Button(
+            '🔄', variant='secondary', elem_id=element_id, visible=False)
         reload_button.style(size='sm')
+
         def reload():
+            print('--[Neo Prompt]-> Reload Prompt Tags')
             self.tags = self._parse_tags()
             # Re-prep the "tag file paths" temp file
             export_tag_file_path_list_to_file()
@@ -116,11 +120,10 @@ class PromptSelectorExtensionScript(scripts.Script):
 
     # endregion
 
-
     # ----------------------------------
     # region Private - Decode Prompt
 
-    def _pick_prompt_tags(self, tag_path: str, target_tag_count:int = 1) -> List[str]:
+    def _pick_prompt_tags(self, tag_path: str, target_tag_count: int = 1) -> List[str]:
         """Randomly pick the prompt tags based on the passing "target count".
 
         Parameters
@@ -154,7 +157,8 @@ class PromptSelectorExtensionScript(scripts.Script):
             # Cannot exceed the max length of the elements.
             tag_value_length = len(tag_data.keys())
             valid_target_tag_count = target_tag_count if target_tag_count < tag_value_length else tag_value_length
-            random_keys = random.sample(tag_data.keys(), valid_target_tag_count)
+            random_keys = random.sample(
+                tag_data.keys(), valid_target_tag_count)
             return [tag_data[key] for key in random_keys]
 
         # Empty return
@@ -203,7 +207,8 @@ class PromptSelectorExtensionScript(scripts.Script):
                 try:
                     # Firstly, try to get the target "count" of tags
                     try:
-                        result = list(map(lambda x: int(x), match.group('num').split('-')))
+                        result = list(
+                            map(lambda x: int(x), match.group('num').split('-')))
                         min_count = min(result)
                         max_count = max(result)
                     except Exception as e:
@@ -215,11 +220,12 @@ class PromptSelectorExtensionScript(scripts.Script):
                     prompt_tags = self._pick_prompt_tags(
                         tag_path=match.group('ref'),
                         target_tag_count=target_tag_count
-                        )
+                    )
                     print('---> Decoded Prompt Tags: ', prompt_tags)
 
                     # Replace the decoded "prompt tags", use `, ` to separated.
-                    prompt = prompt.replace(matched_tag_template, ', '.join(prompt_tags), 1)
+                    prompt = prompt.replace(
+                        matched_tag_template, ', '.join(prompt_tags), 1)
                 except Exception as e:
                     # Error, just remove the matched template.
                     prompt = prompt.replace(matched_tag_template, '', 1)
@@ -254,25 +260,30 @@ class PromptSelectorExtensionScript(scripts.Script):
         # Loop all "prompt types"
         for [prompt_list_attr_name, prompt_attr_name, prompt_param_name] in prompt_type_definitions:
             # Get prompt values
-            prompt_list = getattr(sd_processing_obj, prompt_list_attr_name, None)
+            prompt_list = getattr(
+                sd_processing_obj, prompt_list_attr_name, None)
             # prompt = getattr(sd_processing_obj, prompt_attr_name, None)
 
             #
             if type(prompt_list) == list and len(prompt_list) > 0:
                 # Decode the prompt if needed
-                updated_prompt_list, decoding_required = self._decode_prompt_list(prompt_list)
+                updated_prompt_list, decoding_required = self._decode_prompt_list(
+                    prompt_list)
 
                 # Check if need to update `sd_processing_obj`
                 if decoding_required:
-                    setattr(sd_processing_obj, prompt_list_attr_name, updated_prompt_list)
+                    setattr(sd_processing_obj, prompt_list_attr_name,
+                            updated_prompt_list)
                     # Also update the "current entry" - use the "first" element
-                    setattr(sd_processing_obj, prompt_attr_name, updated_prompt_list[0])
+                    setattr(sd_processing_obj, prompt_attr_name,
+                            updated_prompt_list[0])
 
             # Check if need to "save original prompt to png info".
             if shared.opts.neo_prompt_enable_save_raw_prompt_to_png_info == True and decoding_required:
                 sd_processing_obj.extra_generation_params.update(
-                    {prompt_param_name: ' '.join(prompt_list).replace('\n', ' ')}
-                    )
+                    {prompt_param_name: ' '.join(
+                        prompt_list).replace('\n', ' ')}
+                )
 
     # endregion
 
@@ -285,10 +296,11 @@ class PromptSelectorExtensionScript(scripts.Script):
         # Loop each "tag file"
         for filepath in load_file_paths(EXT_TAGS_DIR):
             with open(filepath, "r", encoding="utf-8") as infile:
-                yml = yaml.safe_load(infile)
+                tag_contents_in_yaml = yaml.safe_load(infile)
 
-                # Use "filename" as the key.
-                tags[filepath.stem] = yml
+                # Add "tags"
+                # - Use "filename" as the "key"
+                tags[filepath.stem] = tag_contents_in_yaml
 
         return tags
 

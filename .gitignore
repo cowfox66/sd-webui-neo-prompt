@@ -1,5 +1,7 @@
 # Ignore all tags under "tags" folder
-tags/**
+tags_local/**
+!tags_local/README.md
+tags_remote/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
