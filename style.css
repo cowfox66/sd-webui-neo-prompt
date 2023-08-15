@@ -25,6 +25,27 @@
   cursor: help;
 }
 
+.neo-prompt-search-textarea {
+  height: 42px !important;
+  width: 250px !important;
+  max-width: 250px !important;
+  display: inline-block;
+  position: relative;
+  outline: none !important;
+
+  box-shadow: var(--input-shadow) !important;
+  border: var(--input-border-width) solid var(--input-border-color) !important;
+  border-radius: var(--input-radius) !important;
+
+  background: var(--input-background-fill) !important;
+  padding: var(--input-padding) !important;
+  color: var(--body-text-color) !important;
+
+  font-weight: var(--input-text-weight) !important;
+  font-size: var(--input-text-size) !important;
+  line-height: var(--line-sm) !important;
+}
+
 /* #endregion */
 
 
@@ -152,6 +173,13 @@
 
 .neo-show {
   display: block;j
+}
+
+.neo-no-scroll {
+  overflow: hidden !important;
+  resize: none !important;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* #endregion */

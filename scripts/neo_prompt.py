@@ -10,7 +10,7 @@ import gradio
 import modules.scripts as scripts
 from modules.scripts import AlwaysVisible, basedir
 from modules import shared
-from scripts.setup import EXT_TAGS_DIR, load_file_paths, export_tag_file_path_list_to_file
+from scripts.setup import EXT_TAGS_DIR, EXT_REMOTE_TAGS_FIR, load_file_paths, export_tag_file_path_list_to_file
 
 # ----------------------------------
 # region Global Variables
@@ -140,9 +140,12 @@ class PromptSelectorExtensionScript(scripts.Script):
         """
         # Try to locate the "tag" value
         keys = tag_path.split(':')
+        print('--[Neo Prompt]-> Process Prompt | Tag Keys', keys)
         tag_data = copy.deepcopy(self.tags)
         for index in range(0, len(keys)):
+            print('--[Neo Prompt]-> Process Prompt | Key', keys[index])
             tag_data = tag_data[keys[index]]
+            print('--[Neo Prompt]-> Process Prompt | Tag Data', tag_data)
 
         #
         if type(tag_data) == list and len(tag_data) > 0:
@@ -159,7 +162,14 @@ class PromptSelectorExtensionScript(scripts.Script):
             valid_target_tag_count = target_tag_count if target_tag_count < tag_value_length else tag_value_length
             random_keys = random.sample(
                 tag_data.keys(), valid_target_tag_count)
-            return [tag_data[key] for key in random_keys]
+
+            # Build the list
+            picked_list = []
+            for key in random_keys:
+                picked_list = picked_list + \
+                    self._pick_prompt_tags(f'{tag_path}:{key}', 1)
+
+            return picked_list
 
         # Empty return
         return []
@@ -202,7 +212,8 @@ class PromptSelectorExtensionScript(scripts.Script):
             # Try to decode all "@" cases
             for match in re.finditer(decode_regex_rule, prompt):
                 matched_tag_template = match.group()
-
+                print('--[Neo Prompt]-> Process Prompt | Match @',
+                      matched_tag_template)
                 # Process
                 try:
                     # Firstly, try to get the target "count" of tags
@@ -254,6 +265,7 @@ class PromptSelectorExtensionScript(scripts.Script):
             updated_prompt_list.append(self._decode_prompt_entry(prompt))
 
         #
+        print('--[Neo Prompt]-> Process Prompt Decode', updated_prompt_list)
         return updated_prompt_list, decoding_required
 
     def _process_prompts(self, sd_processing_obj):
@@ -293,14 +305,15 @@ class PromptSelectorExtensionScript(scripts.Script):
     def _parse_tags(self):
         tags = {}
 
-        # Loop each "tag file"
-        for filepath in load_file_paths(EXT_TAGS_DIR):
-            with open(filepath, "r", encoding="utf-8") as infile:
-                tag_contents_in_yaml = yaml.safe_load(infile)
+        # Loop "remote tags" first
+        for folder_path in [EXT_REMOTE_TAGS_FIR, EXT_TAGS_DIR]:
+            for filepath in load_file_paths(folder_path):
+                with open(filepath, "r", encoding="utf-8") as infile:
+                    tag_contents_in_yaml = yaml.safe_load(infile)
 
-                # Add "tags"
-                # - Use "filename" as the "key"
-                tags[filepath.stem] = tag_contents_in_yaml
+                    # Add "tags"
+                    # - Use "filename" as the "key"
+                    tags[filepath.stem] = tag_contents_in_yaml
 
         return tags
 
